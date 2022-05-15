@@ -1,7 +1,6 @@
 """Component Control 01 module"""
 
 from mgear.shifter import component
-
 from mgear.core import attribute, transform, primitive, applyop
 from pymel.core import datatypes
 import pymel.core as pm
@@ -34,102 +33,142 @@ class Component(component.Main):
             self.have_ctl = False
         else:
             self.have_ctl = True
-            # self.ik_cns = primitive.addTransform(
-            #     self.root, self.getName("ik_cns"), t)
-
-            # self.ctl = self.addCtl(self.ik_cns,
-            #                        "ctl",
-            #                        t,
-            #                        self.color_ik,
-            #                        self.settings["icon"],
-            #                        w=self.settings["ctlSize"] * self.size,
-            #                        h=self.settings["ctlSize"] * self.size,
-            #                        d=self.settings["ctlSize"] * self.size,
-            #                        tp=self.parentCtlTag,
-            #                        guide_loc_ref="root")
 
             # we need to set the rotation order before lock any rotation axis
             if self.settings["k_ro"]:
                 rotOderList = ["XYZ", "YZX", "ZXY", "XZY", "YXZ", "ZYX"]
-                # attribute.setRotOrder(
-                #     self.ctl, rotOderList[self.settings["default_rotorder"]])
 
-            params = [s for s in
-                      ["tx", "ty", "tz", "ro", "rx",
-                       "ry", "rz", "sx", "sy", "sz"]
-                      if self.settings["k_" + s]]
-            # attribute.setKeyableAttributes(self.ctl, params)
-        # if self.settings["joint"]:
-        #     # TODO WIP: add new attr for seeting leaf joint + not build objcts
-        #     if self.settings["leafJoint"]:
-        #         self.jnt_pos.append([t, 0, None, self.settings["uniScale"]])
-        #     else:
-        #         self.jnt_pos.append(
-        #             [self.ctl, 0, None, self.settings["uniScale"]])
+            params = [
+                s for s in ["tx", "ty", "tz", "ro", "rx", "ry", "rz", "sx", "sy", "sz"] if self.settings["k_" + s]
+            ]
 
         if self.side == "L" or self.side == "C":
-            ctl_one_x_matrix = [ 1,0,0,0, 0,1,0,0, 0,0,1,0, 1,1,1,1]
+            ctl_one_x_matrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]
         else:
-            ctl_one_x_matrix = [-1,0,0,0, 0,1,0,0, 0,0,1,0, 1,1,1,1]
-        
+            ctl_one_x_matrix = [-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]
+
         self.ctl_size = 2
 
         t = transform.getTransformFromPos(self.guide.pos["hip"])
         self.ik_cns = primitive.addTransform(self.root, self.getName("hip_ik_cns"), t * ctl_one_x_matrix)
 
-        self.hip = self.addCtl(parent=self.ik_cns, 
-                                    name="hip_ctl", 
-                                    m=t * ctl_one_x_matrix, 
-                                    color=self.color_ik, 
-                                    iconShape="cube", 
-                                    w=self.ctl_size, 
-                                    h=self.ctl_size, 
-                                    d=self.ctl_size)
+        self.hip = self.addCtl(
+            parent=self.ik_cns,
+            name="hip_ctl",
+            m=t * ctl_one_x_matrix,
+            color=self.color_ik,
+            iconShape="cube",
+            w=self.ctl_size,
+            h=self.ctl_size,
+            d=self.ctl_size,
+        )
 
         t = transform.getTransformFromPos(self.guide.pos["paw"])
-        self.ik_cns_ss = primitive.addTransform(self.root, self.getName("paw_ik_cns_ss"), [1,0,0,0, 0,1,0,0, 0,0,1,0, 1,1,1,1])
+        self.ik_cns_ss = primitive.addTransform(
+            self.root, self.getName("paw_ik_cns_ss"), [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]
+        )
         self.ik_cns = primitive.addTransform(self.ik_cns_ss, self.getName("paw_ik_cns"), t * ctl_one_x_matrix)
-        self.paw = self.addCtl(parent=self.ik_cns, 
-                                    name="paw_ctl", 
-                                    m=t * ctl_one_x_matrix, 
-                                    color=self.color_ik, 
-                                    iconShape="cube", 
-                                    w=self.ctl_size, 
-                                    h=self.ctl_size, 
-                                    d=self.ctl_size)
+        self.paw = self.addCtl(
+            parent=self.ik_cns,
+            name="paw_ctl",
+            m=t * ctl_one_x_matrix,
+            color=self.color_ik,
+            iconShape="cube",
+            w=self.ctl_size,
+            h=self.ctl_size,
+            d=self.ctl_size,
+        )
 
         t = transform.getTransformFromPos(self.guide.pos["paw"])
         self.ik_cns = primitive.addTransform(self.paw, self.getName("paw_rotate_ik_cns"), t * ctl_one_x_matrix)
-        toffset = [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,-2,0]
-        self.paw_rotator_npo = primitive.addTransform(self.ik_cns, self.getName("paw_rotate_ik_npo"), t * ctl_one_x_matrix + toffset)
-        self.paw_rotator = self.addCtl(parent=self.paw_rotator_npo, 
-                                    name="paw_rotator_ctl", 
-                                    m=t * ctl_one_x_matrix + toffset, 
-                                    color=self.color_ik, 
-                                    iconShape="cube", 
-                                    w=self.ctl_size * .5, 
-                                    h=self.ctl_size * .5, 
-                                    d=self.ctl_size * .5)
+        toffset = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0]
+        self.paw_rotator_npo = primitive.addTransform(
+            self.ik_cns, self.getName("paw_rotate_ik_npo"), t * ctl_one_x_matrix + toffset
+        )
+        self.paw_rotator = self.addCtl(
+            parent=self.paw_rotator_npo,
+            name="paw_rotator_ctl",
+            m=t * ctl_one_x_matrix + toffset,
+            color=self.color_ik,
+            iconShape="cube",
+            w=self.ctl_size * 0.5,
+            h=self.ctl_size * 0.5,
+            d=self.ctl_size * 0.5,
+        )
+
+        # POLE VECTOR
+        t1 = self.guide.pos["knee"]
+        t2 = self.guide.pos["ankle"]
+        pos = [(t1[0] + t2[0]) / 2, (t1[1] + t2[1]) / 2, t2[2] - 5]
+        t = transform.getTransformFromPos(pos)
+        self.ik_cns = primitive.addTransform(self.root, self.getName("leg_pv_ik_cns"), t * ctl_one_x_matrix)
+        self.pv_npo = primitive.addTransform(self.ik_cns, self.getName("leg_pv_ik_npo"), t * ctl_one_x_matrix)
+        self.pv = self.addCtl(
+            parent=self.pv_npo,
+            name="leg_pv",
+            m=t * ctl_one_x_matrix,
+            color=self.color_ik,
+            iconShape="null",
+            w=self.ctl_size * 0.5,
+            h=self.ctl_size * 0.5,
+            d=self.ctl_size * 0.5,
+        )
 
         ### DRIVER JOINTS
         driver_joints_vis = False
-        self.hip_jnt = primitive.addJoint(self.root, self.getName("hip_driver"), transform.getTransformFromPos(self.guide.pos["hip"]), driver_joints_vis)
-        self.knee_jnt = primitive.addJoint(self.hip_jnt, self.getName("knee_driver"), transform.getTransformFromPos(self.guide.pos["knee"]), driver_joints_vis)
-        self.ankle_jnt = primitive.addJoint(self.knee_jnt, self.getName("ankle_driver"), transform.getTransformFromPos(self.guide.pos["ankle"]), driver_joints_vis)
-        self.paw_jnt = primitive.addJoint(self.ankle_jnt, self.getName("paw_driver"), transform.getTransformFromPos(self.guide.pos["paw"]), driver_joints_vis)
-        self.toe_jnt = primitive.addJoint(self.paw_jnt, self.getName("toe_driver"), transform.getTransformFromPos(self.guide.pos["toe"]), driver_joints_vis)
+        self.hip_jnt = primitive.addJoint(
+            self.root,
+            self.getName("hip_driver"),
+            transform.getTransformFromPos(self.guide.pos["hip"]),
+            driver_joints_vis,
+        )
+        self.knee_jnt = primitive.addJoint(
+            self.hip_jnt,
+            self.getName("knee_driver"),
+            transform.getTransformFromPos(self.guide.pos["knee"]),
+            driver_joints_vis,
+        )
+        self.ankle_jnt = primitive.addJoint(
+            self.knee_jnt,
+            self.getName("ankle_driver"),
+            transform.getTransformFromPos(self.guide.pos["ankle"]),
+            driver_joints_vis,
+        )
+        self.paw_jnt = primitive.addJoint(
+            self.ankle_jnt,
+            self.getName("paw_driver"),
+            transform.getTransformFromPos(self.guide.pos["paw"]),
+            driver_joints_vis,
+        )
+        self.toe_jnt = primitive.addJoint(
+            self.paw_jnt,
+            self.getName("toe_driver"),
+            transform.getTransformFromPos(self.guide.pos["toe"]),
+            driver_joints_vis,
+        )
 
         # IK JOINTS
-        self.ik1_jnt = primitive.addJoint(self.root, self.getName("ik1"), transform.getTransformFromPos(self.guide.pos["hip"]), driver_joints_vis)
-        t1 = self.guide.pos["knee"]
-        t2 = self.guide.pos["ankle"]
+        self.ik1_jnt = primitive.addJoint(
+            self.root, self.getName("ik1"), transform.getTransformFromPos(self.guide.pos["hip"]), driver_joints_vis
+        )
         pos = [(t1[0] + t2[0]) / 2, (t1[1] + t2[1]) / 2, t2[2] - 2]
-        self.ik2_jnt = primitive.addJoint(self.ik1_jnt, self.getName("ik2"), transform.getTransformFromPos(pos), driver_joints_vis)
-        self.ik3_jnt = primitive.addJoint(self.ik2_jnt, self.getName("ik3"), transform.getTransformFromPos(self.guide.pos["paw"]), driver_joints_vis)
+        self.ik2_jnt = primitive.addJoint(
+            self.ik1_jnt, self.getName("ik2"), transform.getTransformFromPos(pos), driver_joints_vis
+        )
+        self.ik3_jnt = primitive.addJoint(
+            self.ik2_jnt, self.getName("ik3"), transform.getTransformFromPos(self.guide.pos["paw"]), driver_joints_vis
+        )
 
         # REVERSE JOINTS
-        self.rev1_jnt = primitive.addJoint(self.root, self.getName("rev1"), transform.getTransformFromPos(self.guide.pos["paw"]), driver_joints_vis)
-        self.rev2_jnt = primitive.addJoint(self.rev1_jnt, self.getName("rev2"), transform.getTransformFromPos(self.guide.pos["ankle"]), driver_joints_vis)
+        self.rev1_jnt = primitive.addJoint(
+            self.root, self.getName("rev1"), transform.getTransformFromPos(self.guide.pos["paw"]), driver_joints_vis
+        )
+        self.rev2_jnt = primitive.addJoint(
+            self.rev1_jnt,
+            self.getName("rev2"),
+            transform.getTransformFromPos(self.guide.pos["ankle"]),
+            driver_joints_vis,
+        )
 
         ### DEFORMER JOINTS
         self.jnt_pos.append([self.hip_jnt, "hip", False])
@@ -139,27 +178,23 @@ class Component(component.Main):
         self.jnt_pos.append([self.toe_jnt, "toe", False])
 
         ### FUNCTION
-        # TODO Create IK handle for _IK joint chain [_IK_01 > _IK_03]
-        self.ik_ikh  = primitive.addIkHandle(self.root, self.getName("ik_ikh"), [self.ik1_jnt, self.ik3_jnt], "ikRPsolver")
-        # self.rev_ikh = primitive.addIkHandle(self.root, self.getName("rev_ikh"), [self.rev1_jnt, self.rev3_jnt], "ikSCsolver")
-
-        # TODO Create IK handle for skin joint chain [Hip > Ankle]
-        self.upleg_ikh = primitive.addIkHandle(self.root, self.getName("upleg_ikh"), [self.hip_jnt, self.ankle_jnt], "ikRPsolver")
-        # TODO Create single IK handle for [Ankle > Paw]
-        self.downleg_ikh = primitive.addIkHandle(self.root, self.getName("downleg_ikh"), [self.ankle_jnt, self.paw_jnt], "ikSCsolver")
+        self.ik_ikh = primitive.addIkHandle(
+            self.root, self.getName("ik_ikh"), [self.ik1_jnt, self.ik3_jnt], "ikRPsolver"
+        )
+        self.upleg_ikh = primitive.addIkHandle(
+            self.root, self.getName("upleg_ikh"), [self.hip_jnt, self.ankle_jnt], "ikRPsolver"
+        )
+        self.downleg_ikh = primitive.addIkHandle(
+            self.root, self.getName("downleg_ikh"), [self.ankle_jnt, self.paw_jnt], "ikSCsolver"
+        )
 
     def addAttributes(self):
         # Ref
         if self.have_ctl:
             if self.settings["ikrefarray"]:
-                ref_names = self.get_valid_alias_list(
-                    self.settings["ikrefarray"].split(","))
+                ref_names = self.get_valid_alias_list(self.settings["ikrefarray"].split(","))
                 if len(ref_names) > 1:
-                    self.ikref_att = self.addAnimEnumParam(
-                        "ikref",
-                        "Ik Ref",
-                        0,
-                        ref_names)
+                    self.ikref_att = self.addAnimEnumParam("ikref", "Ik Ref", 0, ref_names)
 
     def addOperators(self):
         applyop.gear_matrix_cns(self.paw, self.ik_ikh)
@@ -180,7 +215,26 @@ class Component(component.Main):
 
         # applyop.gear_matrix_cns("global_C0_ctl", self.ik_cns_ss)
         pm.parentConstraint("global_C0_ctl", pm.PyNode(self.ik_cns_ss), maintainOffset=True)
-        return
+
+        pm.poleVectorConstraint(pm.PyNode(self.pv), self.ik_ikh)
+        pm.poleVectorConstraint(pm.PyNode(self.pv), self.upleg_ikh)
+
+        pm.PyNode(self.upleg_ikh).twist.set(180)
+
+        pv_pm = pm.PyNode(self.pv)
+        paw_pm = pm.PyNode(self.paw)
+        paw_rot_pm = pm.PyNode(self.paw_rotator)
+        hip_pm = pm.PyNode(self.hip)
+
+        for ctl_attr in [
+            paw_pm.v, paw_pm.s,
+            paw_rot_pm.v, paw_rot_pm.s, paw_rot_pm.t, paw_rot_pm.ry, paw_rot_pm.rz,
+            hip_pm.v, hip_pm.t, hip_pm.r, hip_pm.s,
+            pv_pm.v, pv_pm.r, pv_pm.s,
+        ]:
+            ctl_attr.lock()
+            # ctl_attr.setKeyable(False)
+
 
     # =====================================================
     # CONNECTOR
