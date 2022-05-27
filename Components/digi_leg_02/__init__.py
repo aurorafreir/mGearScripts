@@ -9,6 +9,11 @@ import pymel.core as pm
 # COMPONENT
 #############################################
 
+# todo: fix PV parenting
+# todo: fix PV placement (need to get component scale)
+# todo: create ankle lock
+# todo: create FK ankle w/ IK upperleg
+# todo: twist joints
 
 class Component(component.Main):
     """Shifter component Class"""
@@ -49,10 +54,12 @@ class Component(component.Main):
 
         self.ctl_size = 2
 
+
+        ### IK CONTROLS
         t = transform.getTransformFromPos(self.guide.pos["hip"])
         self.ik_cns = primitive.addTransform(self.root, self.getName("hip_ik_cns"), t * ctl_one_x_matrix)
 
-        self.hip = self.addCtl(
+        self.ik_hip = self.addCtl(
             parent=self.ik_cns,
             name="hip_ctl",
             m=t * ctl_one_x_matrix,
@@ -68,7 +75,7 @@ class Component(component.Main):
             self.root, self.getName("paw_ik_cns_ss"), [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]
         )
         self.ik_cns = primitive.addTransform(self.ik_cns_ss, self.getName("paw_ik_cns"), t * ctl_one_x_matrix)
-        self.paw = self.addCtl(
+        self.ik_paw = self.addCtl(
             parent=self.ik_cns,
             name="paw_ctl",
             m=t * ctl_one_x_matrix,
@@ -80,7 +87,7 @@ class Component(component.Main):
         )
 
         t = transform.getTransformFromPos(self.guide.pos["paw"])
-        self.ik_cns = primitive.addTransform(self.paw, self.getName("paw_rotate_ik_cns"), t * ctl_one_x_matrix)
+        self.ik_cns = primitive.addTransform(self.ik_paw, self.getName("paw_rotate_ik_cns"), t * ctl_one_x_matrix)
         toffset = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0]
         self.paw_rotator_npo = primitive.addTransform(
             self.ik_cns, self.getName("paw_rotate_ik_npo"), t * ctl_one_x_matrix + toffset
@@ -99,55 +106,128 @@ class Component(component.Main):
         # POLE VECTOR
         t1 = self.guide.pos["knee"]
         t2 = self.guide.pos["ankle"]
-        pos = [(t1[0] + t2[0]) / 2, (t1[1] + t2[1]) / 2, t2[2] - 5]
+        pos = [(t1[0] + t2[0]) / 2, (t1[1] + t2[1]) / 2, t2[2] - 10]
         t = transform.getTransformFromPos(pos)
         self.ik_cns = primitive.addTransform(self.root, self.getName("leg_pv_ik_cns"), t * ctl_one_x_matrix)
-        self.pv_npo = primitive.addTransform(self.ik_cns, self.getName("leg_pv_ik_npo"), t * ctl_one_x_matrix)
-        self.pv = self.addCtl(
-            parent=self.pv_npo,
+        self.ik_pv_npo = primitive.addTransform(self.ik_cns, self.getName("leg_pv_ik_npo"), t * ctl_one_x_matrix)
+        self.ik_pv = self.addCtl(
+            parent=self.ik_pv_npo,
             name="leg_pv",
             m=t * ctl_one_x_matrix,
             color=self.color_ik,
-            iconShape="null",
+            iconShape="diamond",
             w=self.ctl_size * 0.5,
             h=self.ctl_size * 0.5,
             d=self.ctl_size * 0.5,
         )
 
-        ### DRIVER JOINTS
+        ### FK CONTROLS
+        t = transform.getTransformFromPos(self.guide.pos["hip"])
+        self.fk_cns = primitive.addTransform(self.root, self.getName("hip_fk_cns"), t * ctl_one_x_matrix)
+
+        self.fk_hip = self.addCtl(
+            parent=self.fk_cns,
+            name="hip_fk_ctl",
+            m=t * ctl_one_x_matrix,
+            color=self.color_ik,
+            iconShape="cube",
+            w=self.ctl_size,
+            h=self.ctl_size,
+            d=self.ctl_size,
+        )
+
+        t = transform.getTransformFromPos(self.guide.pos["knee"])
+        self.fk_cns = primitive.addTransform(self.fk_hip, self.getName("knee_fk_cns"), t * ctl_one_x_matrix)
+
+        self.fk_knee = self.addCtl(
+            parent=self.fk_cns,
+            name="knee_fk_ctl",
+            m=t * ctl_one_x_matrix,
+            color=self.color_ik,
+            iconShape="cube",
+            w=self.ctl_size,
+            h=self.ctl_size,
+            d=self.ctl_size,
+        )
+
+        t = transform.getTransformFromPos(self.guide.pos["ankle"])
+        self.fk_cns = primitive.addTransform(self.fk_knee, self.getName("ankle_fk_cns"), t * ctl_one_x_matrix)
+
+        self.fk_ankle = self.addCtl(
+            parent=self.fk_cns,
+            name="ankle_fk_ctl",
+            m=t * ctl_one_x_matrix,
+            color=self.color_ik,
+            iconShape="cube",
+            w=self.ctl_size,
+            h=self.ctl_size,
+            d=self.ctl_size,
+        )
+
+        t = transform.getTransformFromPos(self.guide.pos["paw"])
+        self.fk_cns = primitive.addTransform(self.fk_ankle, self.getName("paw_fk_cns"), t * ctl_one_x_matrix)
+
+        self.fk_paw = self.addCtl(
+            parent=self.fk_cns,
+            name="paw_fk_ctl",
+            m=t * ctl_one_x_matrix,
+            color=self.color_ik,
+            iconShape="cube",
+            w=self.ctl_size,
+            h=self.ctl_size,
+            d=self.ctl_size,
+        )
+
+        t = transform.getTransformFromPos(self.guide.pos["toe"])
+        self.fk_cns = primitive.addTransform(self.fk_paw, self.getName("toe_fk_cns"), t * ctl_one_x_matrix)
+
+        self.fk_toe = self.addCtl(
+            parent=self.fk_cns,
+            name="toe_fk_ctl",
+            m=t * ctl_one_x_matrix,
+            color=self.color_ik,
+            iconShape="cube",
+            w=self.ctl_size,
+            h=self.ctl_size,
+            d=self.ctl_size,
+        )
+
+
+        ### JOINT SETUP
+        ### IK DRIVER JOINTS
         driver_joints_vis = False
-        self.hip_jnt = primitive.addJoint(
+        self.hip_ik_joint = primitive.addJoint(
             self.root,
-            self.getName("hip_driver"),
+            self.getName("hip_ik_driver"),
             transform.getTransformFromPos(self.guide.pos["hip"]),
             driver_joints_vis,
         )
-        self.knee_jnt = primitive.addJoint(
-            self.hip_jnt,
-            self.getName("knee_driver"),
+        self.knee_ik_joint = primitive.addJoint(
+            self.hip_ik_joint,
+            self.getName("knee_ik_driver"),
             transform.getTransformFromPos(self.guide.pos["knee"]),
             driver_joints_vis,
         )
-        self.ankle_jnt = primitive.addJoint(
-            self.knee_jnt,
-            self.getName("ankle_driver"),
+        self.ankle_ik_joint = primitive.addJoint(
+            self.knee_ik_joint,
+            self.getName("ankle_ik_driver"),
             transform.getTransformFromPos(self.guide.pos["ankle"]),
             driver_joints_vis,
         )
-        self.paw_jnt = primitive.addJoint(
-            self.ankle_jnt,
-            self.getName("paw_driver"),
+        self.paw_ik_joint = primitive.addJoint(
+            self.ankle_ik_joint,
+            self.getName("paw_ik_driver"),
             transform.getTransformFromPos(self.guide.pos["paw"]),
             driver_joints_vis,
         )
-        self.toe_jnt = primitive.addJoint(
-            self.paw_jnt,
-            self.getName("toe_driver"),
+        self.toe_ik_joint = primitive.addJoint(
+            self.paw_ik_joint,
+            self.getName("toe_ik_driver"),
             transform.getTransformFromPos(self.guide.pos["toe"]),
             driver_joints_vis,
         )
 
-        # IK JOINTS
+        # MAIN IK SOLVER JOINTS
         self.ik1_jnt = primitive.addJoint(
             self.root, self.getName("ik1"), transform.getTransformFromPos(self.guide.pos["hip"]), driver_joints_vis
         )
@@ -170,22 +250,87 @@ class Component(component.Main):
             driver_joints_vis,
         )
 
-        ### DEFORMER JOINTS
-        self.jnt_pos.append([self.hip_jnt, "hip", False])
-        self.jnt_pos.append([self.knee_jnt, "knee", False])
-        self.jnt_pos.append([self.ankle_jnt, "ankle", False])
-        self.jnt_pos.append([self.paw_jnt, "paw", False])
-        self.jnt_pos.append([self.toe_jnt, "toe", False])
+        ### FK JOINTS
+        driver_joints_vis = False
+        self.hip_fk_joint = primitive.addJoint(
+            self.root,
+            self.getName("hip_fk_driver"),
+            transform.getTransformFromPos(self.guide.pos["hip"]),
+            driver_joints_vis,
+        )
+        self.knee_fk_joint = primitive.addJoint(
+            self.hip_fk_joint,
+            self.getName("knee_fk_driver"),
+            transform.getTransformFromPos(self.guide.pos["knee"]),
+            driver_joints_vis,
+        )
+        self.ankle_fk_joint = primitive.addJoint(
+            self.knee_fk_joint,
+            self.getName("ankle_fk_driver"),
+            transform.getTransformFromPos(self.guide.pos["ankle"]),
+            driver_joints_vis,
+        )
+        self.paw_fk_joint = primitive.addJoint(
+            self.ankle_fk_joint,
+            self.getName("paw_fk_driver"),
+            transform.getTransformFromPos(self.guide.pos["paw"]),
+            driver_joints_vis,
+        )
+        self.toe_fk_joint = primitive.addJoint(
+            self.paw_fk_joint,
+            self.getName("toe_fk_driver"),
+            transform.getTransformFromPos(self.guide.pos["toe"]),
+            driver_joints_vis,
+        )
 
-        ### FUNCTION
+        ### BLEND JOINTS
+        self.hip_blend_joint = primitive.addJoint(
+            self.root,
+            self.getName("hip_blend_driver"),
+            transform.getTransformFromPos(self.guide.pos["hip"]),
+            driver_joints_vis,
+        )
+        self.knee_blend_joint = primitive.addJoint(
+            self.hip_blend_joint,
+            self.getName("knee_blend_driver"),
+            transform.getTransformFromPos(self.guide.pos["knee"]),
+            driver_joints_vis,
+        )
+        self.ankle_blend_joint = primitive.addJoint(
+            self.knee_blend_joint,
+            self.getName("ankle_blend_driver"),
+            transform.getTransformFromPos(self.guide.pos["ankle"]),
+            driver_joints_vis,
+        )
+        self.paw_blend_joint = primitive.addJoint(
+            self.ankle_blend_joint,
+            self.getName("paw_blend_driver"),
+            transform.getTransformFromPos(self.guide.pos["paw"]),
+            driver_joints_vis,
+        )
+        self.toe_blend_joint = primitive.addJoint(
+            self.paw_blend_joint,
+            self.getName("toe_blend_driver"),
+            transform.getTransformFromPos(self.guide.pos["toe"]),
+            driver_joints_vis,
+        )
+
+        ### SKIN JOINTS
+        self.jnt_pos.append([self.hip_blend_joint, "hip", False])
+        self.jnt_pos.append([self.knee_blend_joint, "knee", False])
+        self.jnt_pos.append([self.ankle_blend_joint, "ankle", False])
+        self.jnt_pos.append([self.paw_blend_joint, "paw", False])
+        self.jnt_pos.append([self.toe_blend_joint, "toe", False])
+
+        ### SOLVER SETUP
         self.ik_ikh = primitive.addIkHandle(
             self.root, self.getName("ik_ikh"), [self.ik1_jnt, self.ik3_jnt], "ikRPsolver"
         )
         self.upleg_ikh = primitive.addIkHandle(
-            self.root, self.getName("upleg_ikh"), [self.hip_jnt, self.ankle_jnt], "ikRPsolver"
+            self.root, self.getName("upleg_ikh"), [self.hip_ik_joint, self.ankle_ik_joint], "ikRPsolver"
         )
         self.downleg_ikh = primitive.addIkHandle(
-            self.root, self.getName("downleg_ikh"), [self.ankle_jnt, self.paw_jnt], "ikSCsolver"
+            self.root, self.getName("downleg_ikh"), [self.ankle_ik_joint, self.paw_ik_joint], "ikSCsolver"
         )
 
     def addAttributes(self):
@@ -196,35 +341,58 @@ class Component(component.Main):
                 if len(ref_names) > 1:
                     self.ikref_att = self.addAnimEnumParam("ikref", "Ik Ref", 0, ref_names)
 
-    def addOperators(self):
-        applyop.gear_matrix_cns(self.paw, self.ik_ikh)
-        # Parent Constrain Paw control to downleg IKHandle
-        applyop.gear_matrix_cns(self.paw, self.downleg_ikh)
-        # Parent Constrain second reverse joint to upper leg IKHandle
-        applyop.gear_matrix_cns(self.rev2_jnt, self.upleg_ikh)
+            # Anim -------------------------------------------
+            self.blend_att = self.addAnimParam("blend",
+                                               "Fk/Ik Blend",
+                                               "double",
+                                               1,
+                                               0,
+                                               1)
 
-        applyop.gear_matrix_cns(self.hip, self.hip_jnt)
+    def addOperators(self):
+        # IK Handle Constraints
+        applyop.gear_matrix_cns(self.ik_paw, self.ik_ikh)
+        applyop.gear_matrix_cns(self.ik_paw, self.downleg_ikh)
+        applyop.gear_matrix_cns(self.rev2_jnt, self.upleg_ikh)
+        applyop.gear_matrix_cns(self.ik_hip, self.hip_ik_joint)
 
         applyop.oriCns(self.ik3_jnt, self.paw_rotator_npo, maintainOffset=True)
 
         # Orient Constrain paw rotator control to reverse joint 1
-        pm.pointConstraint(self.paw, self.rev1_jnt, maintainOffset=True)
+        pm.pointConstraint(self.ik_paw, self.rev1_jnt, maintainOffset=True)
         applyop.oriCns(self.paw_rotator, self.rev1_jnt, maintainOffset=True)
         # Orient Constrain paw control to paw jnt
-        applyop.oriCns(self.paw, self.paw_jnt, maintainOffset=True)
+        applyop.oriCns(self.ik_paw, self.paw_ik_joint, maintainOffset=True)
 
         # applyop.gear_matrix_cns("global_C0_ctl", self.ik_cns_ss)
         pm.parentConstraint("global_C0_ctl", pm.PyNode(self.ik_cns_ss), maintainOffset=True)
 
-        pm.poleVectorConstraint(pm.PyNode(self.pv), self.ik_ikh)
-        pm.poleVectorConstraint(pm.PyNode(self.pv), self.upleg_ikh)
+        pm.poleVectorConstraint(pm.PyNode(self.ik_pv), self.ik_ikh)
+        pm.poleVectorConstraint(pm.PyNode(self.ik_pv), self.upleg_ikh)
 
         pm.PyNode(self.upleg_ikh).twist.set(180)
 
-        pv_pm = pm.PyNode(self.pv)
-        paw_pm = pm.PyNode(self.paw)
+        applyop.gear_matrix_cns(self.fk_hip, self.hip_fk_joint)
+        applyop.gear_matrix_cns(self.fk_knee, self.knee_fk_joint)
+        applyop.gear_matrix_cns(self.fk_ankle, self.ankle_fk_joint)
+        applyop.gear_matrix_cns(self.fk_paw, self.paw_fk_joint)
+        applyop.gear_matrix_cns(self.fk_toe, self.toe_fk_joint)
+
+        # Driver and Blend joint constraints
+        self.hip_blend_cns = pm.orientConstraint(self.hip_ik_joint, self.hip_fk_joint, self.hip_blend_joint)
+        self.knee_blend_cns = pm.orientConstraint(self.knee_ik_joint, self.knee_fk_joint, self.knee_blend_joint)
+        self.ankle_blend_cns = pm.orientConstraint(self.ankle_ik_joint, self.ankle_fk_joint, self.ankle_blend_joint)
+        self.paw_blend_cns = pm.orientConstraint(self.paw_ik_joint, self.paw_fk_joint, self.paw_blend_joint)
+        self.toe_blend_cns = pm.orientConstraint(self.toe_ik_joint, self.toe_fk_joint, self.toe_blend_joint)
+
+        self.flip_node = pm.createNode("floatMath")
+        self.flip_node.operation.set(1)
+
+        # Attr locking
+        pv_pm = pm.PyNode(self.ik_pv)
+        paw_pm = pm.PyNode(self.ik_paw)
         paw_rot_pm = pm.PyNode(self.paw_rotator)
-        hip_pm = pm.PyNode(self.hip)
+        hip_pm = pm.PyNode(self.ik_hip)
 
         for ctl_attr in [
             paw_pm.v, paw_pm.s,
@@ -233,19 +401,18 @@ class Component(component.Main):
             pv_pm.v, pv_pm.r, pv_pm.s,
         ]:
             ctl_attr.lock()
-            # ctl_attr.setKeyable(False)
 
 
     # =====================================================
     # CONNECTOR
     # =====================================================
     def setRelation(self):
-        """Set the relation beetween object from guide to rig"""
-        self.relatives["root"] = self.hip
-        self.controlRelatives["root"] = self.hip
+        """Set the relation between object from guide to rig"""
+        self.relatives["root"] = self.ik_hip
+        self.controlRelatives["root"] = self.ik_hip
 
-        self.relatives["paw"] = self.paw
-        self.controlRelatives["paw"] = self.paw
+        self.relatives["paw"] = self.ik_paw
+        self.controlRelatives["paw"] = self.ik_paw
         self.jointRelatives["paw"] = 4
 
         if self.settings["joint"]:
@@ -257,6 +424,27 @@ class Component(component.Main):
         """Add more connection definition to the set"""
         self.connections["standard"] = self.connect_standard
         self.connections["orientation"] = self.connect_orientation
+
+        self.blend_att >> self.flip_node.floatB
+
+        for cns, ik_jnt, fk_jnt in [
+            [self.hip_blend_cns, self.hip_ik_joint, self.hip_fk_joint],
+            [self.knee_blend_cns, self.knee_ik_joint, self.knee_fk_joint],
+            [self.ankle_blend_cns, self.ankle_ik_joint, self.ankle_fk_joint],
+            [self.paw_blend_cns, self.paw_ik_joint, self.paw_fk_joint],
+            [self.toe_blend_cns, self.toe_ik_joint, self.toe_fk_joint],
+            ]:
+            pm.connectAttr(self.blend_att, f"{cns}.{ik_jnt.name()}W0")
+            pm.connectAttr(self.flip_node.outFloat, f"{cns}.{fk_jnt.name()}W1")
+
+
+        for ik_ctl in [self.ik_hip, self.ik_paw, self.ik_pv]:
+            pm.setAttr(ik_ctl.v, lock=False)
+            pm.connectAttr(self.blend_att, ik_ctl.v)
+
+        for fk_ctl in [self.fk_hip, self.fk_knee, self.fk_ankle, self.fk_paw, self.fk_toe]:
+            pm.setAttr(fk_ctl.v, lock=False)
+            pm.connectAttr(self.flip_node.outFloat, fk_ctl.v)
 
     def connect_standard(self):
         """standard connection definition for the component"""
