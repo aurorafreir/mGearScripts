@@ -107,7 +107,7 @@ class Component(component.Main):
         # POLE VECTOR
         t1 = self.guide.pos["knee"]
         t2 = self.guide.pos["ankle"]
-        pos = [(t1[0] + t2[0]) / 2, (t1[1] + t2[1]) / 2, t2[2] - 10]
+        pos = [(t1[0] + t2[0]) / 2, (t1[1] + t2[1]) / 2, t2[2] - (.5 * self.size)]
         t = transform.getTransformFromPos(pos)
         self.ik_cns = primitive.addTransform(self.root, self.getName("leg_pv_ik_cns"), t * ctl_one_x_matrix)
         self.ik_pv_npo = primitive.addTransform(self.ik_cns, self.getName("leg_pv_ik_npo"), t * ctl_one_x_matrix)
