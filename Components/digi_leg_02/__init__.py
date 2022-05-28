@@ -1,4 +1,4 @@
-"""Component Control 01 module"""
+"""Digitigrade Leg Component"""
 
 from mgear.shifter import component
 from mgear.core import attribute, transform, primitive, applyop
@@ -50,7 +50,8 @@ class Component(component.Main):
         if self.side == "L" or self.side == "C":
             ctl_one_x_matrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]
         else:
-            ctl_one_x_matrix = [-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]
+            # ctl_one_x_matrix = [-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]  # this breaks it for some reason
+            ctl_one_x_matrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]
 
         self.ctl_size = 2
 
@@ -315,6 +316,12 @@ class Component(component.Main):
             driver_joints_vis,
         )
 
+        self.toe_blend_end = primitive.addTransform(
+            self.root,
+            self.getName("toe_blend_end"),
+            transform.getTransformFromPos(self.guide.pos["toe"]),
+        )
+
         ### SKIN JOINTS
         self.jnt_pos.append([self.hip_blend_joint, "hip", False])
         self.jnt_pos.append([self.knee_blend_joint, "knee", False])
@@ -388,6 +395,9 @@ class Component(component.Main):
         self.flip_node = pm.createNode("floatMath")
         self.flip_node.operation.set(1)
 
+        #
+        applyop.gear_matrix_cns(self.toe_blend_joint, self.toe_blend_end)
+
         # Attr locking
         pv_pm = pm.PyNode(self.ik_pv)
         paw_pm = pm.PyNode(self.ik_paw)
@@ -411,8 +421,8 @@ class Component(component.Main):
         self.relatives["root"] = self.ik_hip
         self.controlRelatives["root"] = self.ik_hip
 
-        self.relatives["paw"] = self.ik_paw
-        self.controlRelatives["paw"] = self.ik_paw
+        self.relatives["paw"] = self.toe_blend_end
+        self.controlRelatives["paw"] = self.toe_blend_end
         self.jointRelatives["paw"] = 4
 
         if self.settings["joint"]:
