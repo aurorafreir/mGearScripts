@@ -10,13 +10,9 @@ import pymel.core as pm
 #############################################
 
 # TODO: fix PV parenting
-# TODO: fix PV placement (need to get component scale)
 # TODO: create ankle lock
 # TODO: create FK ankle w/ IK upperleg
 # TODO: twist joints
-# TODO: Create foot adjuster
-#   -- Put a new controller between Paw and Paw_Rot, located at the toe control
-#   -- Set Paw jnt to follow new controller
 # TODO: Setup full attr locking
 
 
@@ -390,7 +386,7 @@ class Component(component.Main):
         applyop.oriCns(self.ik3_jnt, self.paw_rotator_npo, maintainOffset=True)
 
         # Orient Constrain paw rotator control to reverse joint 1
-        pm.pointConstraint(self.ik_paw, self.rev1_jnt, maintainOffset=True)
+        pm.pointConstraint(self.ik_heelpush_pawloc, self.rev1_jnt, maintainOffset=True)
         applyop.oriCns(self.paw_rotator, self.rev1_jnt, maintainOffset=True)
         # Orient Constrain paw control to paw jnt
         applyop.oriCns(self.ik_heelpush, self.paw_ik_joint, maintainOffset=True)
