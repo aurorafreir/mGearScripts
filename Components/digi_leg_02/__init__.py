@@ -14,6 +14,7 @@ import pymel.core as pm
 # TODO: create FK ankle w/ IK upperleg
 # TODO: twist joints
 # TODO: Setup full attr locking
+# TODO: fix toe rotations in ik mode when moving heel ctl
 
 
 class Component(component.Main):
@@ -403,7 +404,11 @@ class Component(component.Main):
         applyop.gear_matrix_cns(self.fk_knee, self.knee_fk_joint)
         applyop.gear_matrix_cns(self.fk_ankle, self.ankle_fk_joint)
         applyop.gear_matrix_cns(self.fk_paw, self.paw_fk_joint)
-        applyop.gear_matrix_cns(self.toe_blend_joint, self.toe_cns)
+
+        # TODO: This needs to be fixed to use an intermediary joint for rotation rather than the ik_paw ctl
+        #   - Currently the toe breaks in FK mode as it only uses the IK ctl rotation
+        pm.pointConstraint(self.toe_blend_joint, self.toe_cns)
+        pm.orientConstraint(self.ik_paw, self.toe_cns)
 
         # Driver and Blend joint constraints
         self.hip_blend_cns = pm.orientConstraint(self.hip_ik_joint, self.hip_fk_joint, self.hip_blend_joint)
