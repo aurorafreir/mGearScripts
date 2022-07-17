@@ -446,9 +446,9 @@ class Component(component.Main):
         self.relatives["root"] = self.ik_hip
         self.controlRelatives["root"] = self.ik_hip
 
-        self.relatives["paw"] = self.toe_blend_end
-        self.controlRelatives["paw"] = self.toe_blend_end
-        self.jointRelatives["paw"] = 4
+        self.relatives["toe"] = self.toe
+        self.controlRelatives["toe"] = self.toe
+        self.jointRelatives["toe"] = 4
 
         # if self.settings["joint"]:
         #     self.jointRelatives["root"] = 0
