@@ -72,17 +72,12 @@ class Guide(guide.ComponentGuide):
 
         self.pIkRefArray = self.addParam("ikrefarray", "string", "")
 
-        self.pJoint = self.addParam("joint", "bool", False)
-        self.pLeafJoint = self.addParam("leafJoint", "bool", False)
-        self.pJoint = self.addParam("uniScale", "bool", False)
 
         for s in ["tx", "ty", "tz", "ro", "rx", "ry", "rz", "sx", "sy", "sz"]:
             self.addParam("k_" + s, "bool", True)
 
         self.pDefault_RotOrder = self.addParam(
             "default_rotorder", "long", 0, 0, 5)
-        self.pNeutralRotation = self.addParam("neutralRotation", "bool", True)
-        self.pMirrorBehaviour = self.addParam("mirrorBehaviour", "bool", False)
         self.pCtlSize = self.addParam("ctlSize", "double", 1, None, None)
         self.pUseIndex = self.addParam("useIndex", "bool", False)
         self.pParentJointIndex = self.addParam(
@@ -168,18 +163,8 @@ class componentSettings(MayaQWidgetDockableMixin, guide.componentMainSettings):
 
         # populate component settings
 
-        self.populateCheck(self.settingsTab.joint_checkBox, "joint")
-        self.enable_leaf_joint()
-        self.populateCheck(self.settingsTab.leafJoint_checkBox, "leafJoint")
-        self.populateCheck(self.settingsTab.uniScale_checkBox, "uniScale")
-        self.populateCheck(self.settingsTab.neutralRotation_checkBox,
-                           "neutralRotation")
-        self.populateCheck(self.settingsTab.mirrorBehaviour_checkBox,
-                           "mirrorBehaviour")
         self.settingsTab.ctlSize_doubleSpinBox.setValue(
             self.root.attr("ctlSize").get())
-        sideIndex = self.iconsList.index(self.root.attr("icon").get())
-        self.settingsTab.controlShape_comboBox.setCurrentIndex(sideIndex)
 
         self.populateCheck(self.settingsTab.tx_checkBox, "k_tx")
         self.populateCheck(self.settingsTab.ty_checkBox, "k_ty")
@@ -224,36 +209,10 @@ class componentSettings(MayaQWidgetDockableMixin, guide.componentMainSettings):
 
     def create_componentConnections(self):
 
-        self.settingsTab.joint_checkBox.stateChanged.connect(
-            self.enable_leaf_joint)
-        self.settingsTab.joint_checkBox.stateChanged.connect(
-            partial(self.updateCheck,
-                    self.settingsTab.joint_checkBox,
-                    "joint"))
-        self.settingsTab.leafJoint_checkBox.stateChanged.connect(
-            partial(self.updateCheck,
-                    self.settingsTab.leafJoint_checkBox,
-                    "leafJoint"))
-        self.settingsTab.uniScale_checkBox.stateChanged.connect(
-            partial(self.updateCheck,
-                    self.settingsTab.uniScale_checkBox,
-                    "uniScale"))
-        self.settingsTab.neutralRotation_checkBox.stateChanged.connect(
-            partial(self.updateCheck,
-                    self.settingsTab.neutralRotation_checkBox,
-                    "neutralRotation"))
-        self.settingsTab.mirrorBehaviour_checkBox.stateChanged.connect(
-            partial(self.updateCheck,
-                    self.settingsTab.mirrorBehaviour_checkBox,
-                    "mirrorBehaviour"))
         self.settingsTab.ctlSize_doubleSpinBox.valueChanged.connect(
             partial(self.updateSpinBox,
                     self.settingsTab.ctlSize_doubleSpinBox,
                     "ctlSize"))
-        self.settingsTab.controlShape_comboBox.currentIndexChanged.connect(
-            partial(self.updateControlShape,
-                    self.settingsTab.controlShape_comboBox,
-                    self.iconsList, "icon"))
 
         self.settingsTab.tx_checkBox.stateChanged.connect(
             partial(self.updateCheck, self.settingsTab.tx_checkBox, "k_tx"))

@@ -9,11 +9,16 @@ import pymel.core as pm
 # COMPONENT
 #############################################
 
-# todo: fix PV parenting
-# todo: fix PV placement (need to get component scale)
-# todo: create ankle lock
-# todo: create FK ankle w/ IK upperleg
-# todo: twist joints
+# TODO: fix PV parenting
+# TODO: fix PV placement (need to get component scale)
+# TODO: create ankle lock
+# TODO: create FK ankle w/ IK upperleg
+# TODO: twist joints
+# TODO: Create foot adjuster
+#   -- Put a new controller between Paw and Paw_Rot, located at the toe control
+#   -- Set Paw jnt to follow new controller
+# TODO: Setup full attr locking
+
 
 class Component(component.Main):
     """Shifter component Class"""
@@ -24,28 +29,28 @@ class Component(component.Main):
     def addObjects(self):
         """Add all the objects needed to create the component."""
 
-        if self.settings["neutralRotation"]:
-            t = transform.getTransformFromPos(self.guide.pos["root"])
-        else:
-            t = self.guide.tra["root"]
-            if self.settings["mirrorBehaviour"] and self.negate:
-                scl = [1, 1, -1]
-            else:
-                scl = [1, 1, 1]
-            t = transform.setMatrixScale(t, scl)
-        if self.settings["joint"] and self.settings["leafJoint"]:
-            pm.displayInfo("Skipping ctl creation, just leaf joint")
-            self.have_ctl = False
-        else:
-            self.have_ctl = True
-
-            # we need to set the rotation order before lock any rotation axis
-            if self.settings["k_ro"]:
-                rotOderList = ["XYZ", "YZX", "ZXY", "XZY", "YXZ", "ZYX"]
-
-            params = [
-                s for s in ["tx", "ty", "tz", "ro", "rx", "ry", "rz", "sx", "sy", "sz"] if self.settings["k_" + s]
-            ]
+        # if self.settings["neutralRotation"]:
+        #     t = transform.getTransformFromPos(self.guide.pos["root"])
+        # else:
+        #     t = self.guide.tra["root"]
+        #     if self.settings["mirrorBehaviour"] and self.negate:
+        #         scl = [1, 1, -1]
+        #     else:
+        #         scl = [1, 1, 1]
+        #     t = transform.setMatrixScale(t, scl)
+        # if self.settings["joint"] and self.settings["leafJoint"]:
+        #     pm.displayInfo("Skipping ctl creation, just leaf joint")
+        #     self.have_ctl = False
+        # else:
+        #     self.have_ctl = True
+        #
+        #     # we need to set the rotation order before lock any rotation axis
+        #     if self.settings["k_ro"]:
+        #         rotOderList = ["XYZ", "YZX", "ZXY", "XZY", "YXZ", "ZYX"]
+        #
+        #     params = [
+        #         s for s in ["tx", "ty", "tz", "ro", "rx", "ry", "rz", "sx", "sy", "sz"] if self.settings["k_" + s]
+        #     ]
 
         if self.side == "L" or self.side == "C":
             ctl_one_x_matrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]
@@ -53,7 +58,7 @@ class Component(component.Main):
             # ctl_one_x_matrix = [-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]  # this breaks it for some reason
             ctl_one_x_matrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]
 
-        self.ctl_size = 2
+        self.ctl_size = 2 * self.settings["ctlSize"]
 
 
         ### IK CONTROLS
@@ -87,8 +92,27 @@ class Component(component.Main):
             d=self.ctl_size,
         )
 
+        t = transform.getTransformFromPos(self.guide.pos["toe"])
+        self.ik_cns_heelpush_ss = primitive.addTransform(
+            self.ik_paw, self.getName("paw_ik_heelpush_cns_ss"), [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]
+        )
+        self.ik_heelpush_cns = primitive.addTransform(self.ik_cns_heelpush_ss, self.getName("paw_ik_heelpush_cns"), t * ctl_one_x_matrix)
+        self.ik_heelpush = self.addCtl(
+            parent=self.ik_heelpush_cns,
+            name="paw_heelpush_ctl",
+            m=t * ctl_one_x_matrix,
+            color=self.color_ik,
+            iconShape="diamond",
+            w=self.ctl_size * 0.7,
+            h=self.ctl_size * 0.7,
+            d=self.ctl_size * 0.7,
+        )
+
         t = transform.getTransformFromPos(self.guide.pos["paw"])
-        self.ik_cns = primitive.addTransform(self.ik_paw, self.getName("paw_rotate_ik_cns"), t * ctl_one_x_matrix)
+        self.ik_heelpush_pawloc = primitive.addTransform(self.ik_heelpush, self.getName("paw_ik_heelpush_cns"), t * ctl_one_x_matrix)
+
+        t = transform.getTransformFromPos(self.guide.pos["paw"])
+        self.ik_cns = primitive.addTransform(self.ik_heelpush, self.getName("paw_rotate_ik_cns"), t * ctl_one_x_matrix)
         toffset = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, 0]
         self.paw_rotator_npo = primitive.addTransform(
             self.ik_cns, self.getName("paw_rotate_ik_npo"), t * ctl_one_x_matrix + toffset
@@ -178,21 +202,6 @@ class Component(component.Main):
             h=self.ctl_size,
             d=self.ctl_size,
         )
-
-        t = transform.getTransformFromPos(self.guide.pos["toe"])
-        self.fk_cns = primitive.addTransform(self.fk_paw, self.getName("toe_fk_cns"), t * ctl_one_x_matrix)
-
-        self.fk_toe = self.addCtl(
-            parent=self.fk_cns,
-            name="toe_fk_ctl",
-            m=t * ctl_one_x_matrix,
-            color=self.color_ik,
-            iconShape="cube",
-            w=self.ctl_size,
-            h=self.ctl_size,
-            d=self.ctl_size,
-        )
-
 
         ### JOINT SETUP
         ### IK DRIVER JOINTS
@@ -322,12 +331,28 @@ class Component(component.Main):
             transform.getTransformFromPos(self.guide.pos["toe"]),
         )
 
+        ### ADDITIONAL CONTROLS
+        #
+        t = transform.getTransformFromPos(self.guide.pos["toe"])
+        self.toe_cns = primitive.addTransform(self.root, self.getName("toe_cns"), t * ctl_one_x_matrix)
+
+        self.toe = self.addCtl(
+            parent=self.toe_cns,
+            name="toe_ctl",
+            m=t * ctl_one_x_matrix,
+            color=self.color_ik,
+            iconShape="diamond",
+            w=self.ctl_size * .5,
+            h=self.ctl_size * .5,
+            d=self.ctl_size * .5,
+        )
+
         ### SKIN JOINTS
         self.jnt_pos.append([self.hip_blend_joint, "hip", False])
         self.jnt_pos.append([self.knee_blend_joint, "knee", False])
         self.jnt_pos.append([self.ankle_blend_joint, "ankle", False])
         self.jnt_pos.append([self.paw_blend_joint, "paw", False])
-        self.jnt_pos.append([self.toe_blend_joint, "toe", False])
+        self.jnt_pos.append([self.toe, "toe", False])
 
         ### SOLVER SETUP
         self.ik_ikh = primitive.addIkHandle(
@@ -342,24 +367,23 @@ class Component(component.Main):
 
     def addAttributes(self):
         # Ref
-        if self.have_ctl:
-            if self.settings["ikrefarray"]:
-                ref_names = self.get_valid_alias_list(self.settings["ikrefarray"].split(","))
-                if len(ref_names) > 1:
-                    self.ikref_att = self.addAnimEnumParam("ikref", "Ik Ref", 0, ref_names)
+        if self.settings["ikrefarray"]:
+            ref_names = self.get_valid_alias_list(self.settings["ikrefarray"].split(","))
+            if len(ref_names) > 1:
+                self.ikref_att = self.addAnimEnumParam("ikref", "Ik Ref", 0, ref_names)
 
-            # Anim -------------------------------------------
-            self.blend_att = self.addAnimParam("blend",
-                                               "Fk/Ik Blend",
-                                               "double",
-                                               1,
-                                               0,
-                                               1)
+        # Anim -------------------------------------------
+        self.blend_att = self.addAnimParam("blend",
+                                           "Fk/Ik Blend",
+                                           "double",
+                                           1,
+                                           0,
+                                           1)
 
     def addOperators(self):
         # IK Handle Constraints
-        applyop.gear_matrix_cns(self.ik_paw, self.ik_ikh)
-        applyop.gear_matrix_cns(self.ik_paw, self.downleg_ikh)
+        applyop.gear_matrix_cns(self.paw_rotator, self.ik_ikh)
+        applyop.gear_matrix_cns(self.ik_heelpush_pawloc, self.downleg_ikh)
         applyop.gear_matrix_cns(self.rev2_jnt, self.upleg_ikh)
         applyop.gear_matrix_cns(self.ik_hip, self.hip_ik_joint)
 
@@ -369,7 +393,7 @@ class Component(component.Main):
         pm.pointConstraint(self.ik_paw, self.rev1_jnt, maintainOffset=True)
         applyop.oriCns(self.paw_rotator, self.rev1_jnt, maintainOffset=True)
         # Orient Constrain paw control to paw jnt
-        applyop.oriCns(self.ik_paw, self.paw_ik_joint, maintainOffset=True)
+        applyop.oriCns(self.ik_heelpush, self.paw_ik_joint, maintainOffset=True)
 
         # applyop.gear_matrix_cns("global_C0_ctl", self.ik_cns_ss)
         pm.parentConstraint("global_C0_ctl", pm.PyNode(self.ik_cns_ss), maintainOffset=True)
@@ -383,7 +407,7 @@ class Component(component.Main):
         applyop.gear_matrix_cns(self.fk_knee, self.knee_fk_joint)
         applyop.gear_matrix_cns(self.fk_ankle, self.ankle_fk_joint)
         applyop.gear_matrix_cns(self.fk_paw, self.paw_fk_joint)
-        applyop.gear_matrix_cns(self.fk_toe, self.toe_fk_joint)
+        applyop.gear_matrix_cns(self.toe_blend_joint, self.toe_cns)
 
         # Driver and Blend joint constraints
         self.hip_blend_cns = pm.orientConstraint(self.hip_ik_joint, self.hip_fk_joint, self.hip_blend_joint)
@@ -425,8 +449,8 @@ class Component(component.Main):
         self.controlRelatives["paw"] = self.toe_blend_end
         self.jointRelatives["paw"] = 4
 
-        if self.settings["joint"]:
-            self.jointRelatives["root"] = 0
+        # if self.settings["joint"]:
+        #     self.jointRelatives["root"] = 0
 
         self.aliasRelatives["root"] = "ctl"
 
@@ -452,7 +476,7 @@ class Component(component.Main):
             pm.setAttr(ik_ctl.v, lock=False)
             pm.connectAttr(self.blend_att, ik_ctl.v)
 
-        for fk_ctl in [self.fk_hip, self.fk_knee, self.fk_ankle, self.fk_paw, self.fk_toe]:
+        for fk_ctl in [self.fk_hip, self.fk_knee, self.fk_ankle, self.fk_paw]:
             pm.setAttr(fk_ctl.v, lock=False)
             pm.connectAttr(self.flip_node.outFloat, fk_ctl.v)
 
