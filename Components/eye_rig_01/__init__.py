@@ -10,6 +10,10 @@ import maya.cmds as cmds
 # COMPONENT
 #############################################
 
+# TODO Remap eye follow so it's more intense to start and then tapers off
+# TODO Split up vertical and horizontal follow
+# TODO Add an eye blink
+# TODO Add a main "Over" joint to hold the 3 skin joints
 
 class Component(component.Main):
     """Shifter component Class"""
@@ -191,8 +195,8 @@ class Component(component.Main):
 
         """ Skin Joints """
         self.jnt_pos.append([self.eye_joint, "eye", False])
-        self.jnt_pos.append([self.eye_upper_joint, "eye_upper", False, 0])
-        self.jnt_pos.append([self.eye_lower_joint, "eye_lower", False, 0])
+        self.jnt_pos.append([self.eye_upper_joint, "eye_upper", "eye_main"])
+        self.jnt_pos.append([self.eye_lower_joint, "eye_lower", "eye_main"])
 
     def addAttributes(self):
         # Ref
@@ -221,6 +225,8 @@ class Component(component.Main):
 
         self.relatives["root"] = self.eye_aim_offset
         self.controlRelatives["root"] = self.eye_aim_offset
+
+        self.jointRelatives["eye_main"] = 0
 
     def addConnection(self):
         """Add more connection definition to the set"""
